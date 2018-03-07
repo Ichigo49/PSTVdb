@@ -4,22 +4,20 @@ $global:ApiKeyFile = "$Home\.psh\TVdbApi.key"
 $global:UserKeyFile = "$Home\.psh\TVdbUser.key"
 $global:UserNameFile = "$Home\.psh\TVdb.name"
 
-
-$Public  = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue )
-$Private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue )
-
-Foreach($Import in @($Public + $Private))
+$functionFolders = @('Public', 'Private')
+ForEach ($folder in $functionFolders)
 {
-    Try
+    $folderPath = Join-Path -Path $PSScriptRoot -ChildPath $folder
+    If (Test-Path -Path $folderPath)
     {
-        . $Import.FullName
-    }
-    Catch
-    {
-        Write-Error -Message "Failed to import function $($Import.FullName): $_"
-    }
+        Write-Verbose -Message "Importing from $folder"
+        $functions = Get-ChildItem -Path $folderPath -Filter '*.ps1' 
+        ForEach ($function in $functions)
+        {
+            Write-Verbose -Message "  Importing $($function.BaseName)"
+            . $($function.FullName)
+        }
+    }    
 }
-
-$ModuleMembers = $Public.BaseName
-
-Export-ModuleMember -Function $ModuleMembers
+$publicFunctions = (Get-ChildItem -Path "$PSScriptRoot\Public" -Filter '*.ps1').BaseName
+Export-ModuleMember -Function $publicFunctions
